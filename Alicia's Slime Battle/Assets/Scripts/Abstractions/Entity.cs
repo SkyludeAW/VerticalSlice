@@ -11,7 +11,12 @@ public enum EntityAttribute {
     Player,
     Slime,
     Tentacle,
-    Undead
+    Undead,
+    
+    Fire,
+    Ice,
+    Holy,
+    Shadow
 }
 
 public abstract class Entity : MonoBehaviour {
@@ -23,6 +28,9 @@ public abstract class Entity : MonoBehaviour {
     [Tooltip("Entity's current health")]
     [SerializeField] protected float health;
     public float Health => health;
+
+    // Status effects currently applied on this entity
+    protected List<StatusEffect> activeStatusEffects = new List<StatusEffect>();
 
     // Direction this entity is aiming at
     protected Vector2 aimDirection;
@@ -62,17 +70,65 @@ public abstract class Entity : MonoBehaviour {
     public void SetInvincibilityEndTime(float invincibilityEndTime) {
         this.invincibilityEndTime = invincibilityEndTime;
     }
+    
+    // Update status effects
+    protected virtual void Update() {
+        for (int i = activeStatusEffects.Count - 1; i >= 0; i--) {
+            StatusEffect effect = activeStatusEffects[i];
+            effect.Update(this);
+
+            if (effect.GetRemovalCondition()(this)) {
+                effect.OnRemove(this);
+
+                activeStatusEffects.RemoveAt(i);
+            }
+        }
+    }
+
+    // Apply status effect on this entity
+    public void ApplyStatusEffect(StatusEffect effect) {
+        activeStatusEffects.Add(effect);
+        effect.OnApply(this);
+    }
+
+    // Remove status effect from this entity
+    public void RemoveStatusEffect(StatusEffect effect) {
+        if (activeStatusEffects.Contains(effect)) {
+            activeStatusEffects.Remove(effect);
+            effect.OnRemove(this);
+        }
+    }
 
     // "force" represents potential knockback effects on this entity, "origin" represents the damage source, "causeInvincibility" marks if this damage will make the receiver enter invincibility frames (useful for differentiating continuous damages like poison)
     public virtual void TakeDamage(float damage, Vector2 force = default, Entity origin = null, bool causeInvincibility = true) {
         if (!IsInvincible) {
-            Hurt(causeInvincibility);
+            if (damage > 0)
+                Hurt(causeInvincibility);
+
             health -= damage;
+
             if (rb != null)
                 rb.AddForce(force * (1f - EssentialAttributes.knockbackResistance));
+
             if (health <= 0f)
                 Die();
+            else if (health > EssentialAttributes.maxHealth)
+                health = EssentialAttributes.maxHealth;
         }
+    }
+
+    // Similar to TakeDamage but ignores invincibility and hurt frames, used for things like healing or self-damaging
+    public virtual void RemoveHealth(float damage, Vector2 force = default, Entity origin = null) {
+        health -= damage;
+
+        if (rb != null)
+            rb.AddForce(force * (1f - EssentialAttributes.knockbackResistance));
+
+        if (health <= 0f)
+            Die();
+
+        else if (health > EssentialAttributes.maxHealth)
+            health = EssentialAttributes.maxHealth;
     }
 
     // What happens after the entity dies 💀; implemented explicitly in the child classes
@@ -100,7 +156,6 @@ public abstract class Entity : MonoBehaviour {
 
     // Extending the invincibleEndTime by invincibilityDuration to gain invincibility for some time
     // 进入无敌帧；无敌持续时间为 invincibilityDuration
-    // I don't even know why this thing is being implemented as a Coroutine lol
     protected virtual IEnumerator EnterInvincibilityFrames(float invincibilityDuration) {
         invincibilityEndTime = Mathf.Max(invincibilityEndTime, Time.time + invincibilityDuration);
 

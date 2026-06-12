@@ -9,6 +9,7 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance { get; private set; }
 
     [SerializeField] GameObject slimePrefab;
+    [SerializeField] GameObject fireSlimePrefab;
 
     [SerializeField] private bool drawGizmos;
 
@@ -26,9 +27,7 @@ public class GameManager : MonoBehaviour
             Instance = this;
     }
 
-    private void Start()
-    {
-        // Bro why would you need a local variable for player reference when u can already get it from the locator???
+    private void Start() {
         player = PlayerLocator.Instance.GetComponent<PlayerController>();
         player.PlayerDied += Titlepage.Lost;
     }
@@ -45,12 +44,22 @@ public class GameManager : MonoBehaviour
     private void Update() {
         if (Time.time > nextSpawnTime) {
             nextSpawnTime = Time.time + spawnInterval;
-            Instantiate(slimePrefab, new Vector2(Random.Range(-spawnBoxSize.x/2, spawnBoxSize.x/2), Random.Range(-spawnBoxSize.y/2, spawnBoxSize.y/2)) + spawnBoxLocation, Quaternion.identity);
+            SpawnSlime();
         }
         if (Time.time > nextSpeedUpTime) {
-            spawnInterval *= 0.995f;
+            spawnInterval *= 0.99f;
             nextSpeedUpTime = Time.time + speedUpInterval;
         }
+    }
+
+    public void SpawnSlime() {
+        GameObject slimeToSpawn = (Random.value > 0.25f) ? slimePrefab : fireSlimePrefab;
+
+        Instantiate(slimeToSpawn, new Vector2(Random.Range(-spawnBoxSize.x / 2, spawnBoxSize.x / 2), Random.Range(-spawnBoxSize.y / 2, spawnBoxSize.y / 2)) + spawnBoxLocation, Quaternion.identity);
+    }
+
+    public void SpawnPowerup() {
+
     }
 
     public void Unpause() {

@@ -4,6 +4,8 @@ using TMPro;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Pool;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 using UnityEngine.UI;
 
 /*
@@ -36,6 +38,10 @@ public class PlayerController : Entity
     public delegate void playerDie();
     public event playerDie PlayerDied;
 
+    // Vignette effect on low health
+    [SerializeField] Volume postProcessingVolume;
+    Vignette vignette;
+
     private void Awake() {
         // 反正就是一堆玩意的初始化
         rb = GetComponent<Rigidbody2D>();
@@ -60,10 +66,17 @@ public class PlayerController : Entity
 
         health = EssentialAttributes.maxHealth;
         healthBar?.SetMaxHealth((int)health); // Initialize the health bar
+
+        // Initialize vignette effect
+        if (postProcessingVolume != null && postProcessingVolume.profile.TryGet<Vignette>(out vignette)) {
+            vignette.intensity.value = 0f; // Initial vignette intensity
+        }
     }
 
     // Update handles the input and visual parts of player actions
-    private void Update() {
+    protected override void Update() {
+        base.Update();
+
         // Player movements input
         movement.x = Input.GetAxisRaw("Horizontal");
         movement.y = Input.GetAxisRaw("Vertical");
@@ -160,10 +173,16 @@ public class PlayerController : Entity
     }
     #endregion
     //code that updates the healthbar
-public override void TakeDamage(float damage, Vector2 force = default, Entity origin = null, bool causeInvincibility = true)
-    {
+    public override void TakeDamage(float damage, Vector2 force = default, Entity origin = null, bool causeInvincibility = true) {
         base.TakeDamage(damage, force, origin, causeInvincibility);
         healthBar?.SetHealth((int)health); // Update health bar when taking damage
+
+        vignette.intensity.value = (1 - health / EssentialAttributes.maxHealth) * 0.3f; // Increase vignette intensity as health decreases
+    }
+
+    public override void RemoveHealth(float damage, Vector2 force = default, Entity origin = null) {
+        base.RemoveHealth(damage, force, origin);
+        healthBar?.SetHealth((int)health); // Update health bar when removing health 
     }
 
     // Timer for attack cooldown
@@ -171,7 +190,7 @@ public override void TakeDamage(float damage, Vector2 force = default, Entity or
         yield return new WaitForSeconds(attackCooldown);
         canAttack = true;
     }
-
+    
     // Timer for dash cooldown
     private IEnumerator StartDashCooldown() {
         // 冲累了，歇会

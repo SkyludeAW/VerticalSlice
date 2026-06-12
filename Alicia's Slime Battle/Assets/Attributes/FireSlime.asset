@@ -10,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1e8ebc0e7fe52b54490ccf9ca8ff43a6, type: 3}
-  m_Name: BasicSlime
-  m_EditorClassIdentifier: 
-  maxHealth: 40
-  speed: 25
-  attackDamage: 10
+  m_Name: FireSlime
+  m_EditorClassIdentifier: Assembly-CSharp::EntityData
+  maxHealth: 60
+  speed: 20
+  attackDamage: 5
   armor: 0
   attackKnockback: 250
   knockbackResistance: 0
-  attributes: 01000000
+  attributes: 0100000004000000

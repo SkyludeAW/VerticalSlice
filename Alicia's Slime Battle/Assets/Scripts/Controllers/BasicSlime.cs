@@ -21,7 +21,10 @@ public class BasicSlime : Entity
     [SerializeField] private bool drawGizmos;
     [SerializeField] private AudioSource audioSource;
 
-    private void Awake() {
+    [SerializeField] protected AnimationState.AnimationStates idleState;
+    [SerializeField] protected AnimationState.AnimationStates attackState;
+
+    protected virtual void Awake() {
         // 反正就是一堆玩意的初始化
         rb = GetComponent<Rigidbody2D>();
 
@@ -34,7 +37,9 @@ public class BasicSlime : Entity
         meleeAttack.TargetHit += AttackHit;
     }
 
-    private void Update() {
+    protected override void Update() {
+        base.Update();
+
         agent.path.maxAcceleration = EssentialAttributes.speed;
 
         float distanceToTarget = (agent.target.position - transform.position).magnitude;
@@ -52,28 +57,34 @@ public class BasicSlime : Entity
             }
         }
 
+        /* 
         if (Input.GetKeyDown(KeyCode.F) && canAttack) {
             aimDirection = CameraLocator.Instance.PlayerCamera.ScreenToWorldPoint(Input.mousePosition) - transform.position;
             aimDirection.Normalize();
             StartCoroutine(Attack());
             canAttack = false;
         }
+        */
     }
 
     public override void Die() {
         GameManager.Instance.IncreaseScore(1);
-        Destroy(this.gameObject);
+
+        Destroy(this.gameObject, 0.5f);
+
+        agent.speed = 0;
+        enabled = false;
     }
 
     // Performs a jump attack at aimDirection; jump distance is determined with jumpStrength
     private IEnumerator Attack() {
         // AttackStart() and AttackEnd() will be called as animation events during the BasicSlime_Jump animation
-        ChangeAnimationState(AnimationState.AnimationStates.BASICSLIME_JUMP);
+        ChangeAnimationState(attackState);
 
         yield return new WaitForEndOfFrame();
         yield return new WaitForSeconds(animator.GetCurrentAnimatorStateInfo(0).length);
 
-        ChangeAnimationState(AnimationState.AnimationStates.BASICSLIME_IDLE);
+        ChangeAnimationState(idleState);
 
         StartCoroutine(StartAttackCooldown());
     }
@@ -85,20 +96,25 @@ public class BasicSlime : Entity
         healthBar?.SetHealth((int)health); // Update health bar when taking damage
     }
 
+    public override void RemoveHealth(float damage, Vector2 force = default, Entity origin = null) {
+        base.RemoveHealth(damage, force, origin);
+        healthBar?.SetHealth((int)health); // Update health bar when removing health 
+    }
+
     // This is called when the slime begins to jump, which enables its attack collider
-    private void AttackStart() {
+    protected void AttackStart() {
         rb.AddForce(aimDirection * jumpStrength);
         meleeAttack.attackCollider.enabled = true;
     }
 
     // Attack collider is disabled when the slime lands its jump
-    private void AttackEnd() {
+    protected void AttackEnd() {
         meleeAttack.attackCollider.enabled = false;
     }
 
     // Triggers when the slime hits a melee attack
-    private void AttackHit(Entity target) {
-        //if (!target.IsA(EntityAttribute.Slime))
+    protected virtual void AttackHit(Entity target) {
+        if (!target.IsA(EntityAttribute.Slime))
             target.TakeDamage(EssentialAttributes.attackDamage, EssentialAttributes.attackKnockback * aimDirection, this);
     }
 

@@ -10,7 +10,8 @@ public class AnimationState
         PLAYER_MOVING,
         PLAYER_MELEE_ATTACK,
         BASICSLIME_IDLE,
-        BASICSLIME_JUMP
+        BASICSLIME_JUMP,
+        FIRESLIME_IDLE
     }
 
     public static string StateToString(AnimationStates state) {
@@ -25,6 +26,8 @@ public class AnimationState
                 return "BasicSlime_Idle";
             case AnimationStates.BASICSLIME_JUMP:
                 return "BasicSlime_Jump";
+            case AnimationStates.FIRESLIME_IDLE:
+                return "FireSlime_Idle";
             default:
                 return null;
         }

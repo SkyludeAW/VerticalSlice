@@ -9,7 +9,7 @@ public class HealthBar : MonoBehaviour
     {
         slider.maxValue = health;
         slider.value = health;
-        Debug.Log($"Health: {health}, Slider Value: {slider.value}, Max: {slider.maxValue}");
+        // Debug.Log($"Health: {health}, Slider Value: {slider.value}, Max: {slider.maxValue}");
 
     }
 

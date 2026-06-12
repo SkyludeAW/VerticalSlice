@@ -59,9 +59,34 @@ Two major bugs that occurred during the previous playtest are fixed. One major b
 ### 3.
 Most of the changes I made here are script-based improvements. I added a dash animation curve that allows customization of the player's speed, distance over the time of the dash, which I also combined with the blur shader (I am planning to make a screen-wide bullet-time/motion blur shader during some well-timed dashes). Object pools are added for bullets and enemies to ensure the game does not lag late-game. I created an AnimationListener class that listens to specific keyframes of the attack animations of the player and enemies, which fires an animation event that I encapsules as custom events that trigger the attack hitboxes to be active during the attack period. This ensures the animation and attacks are synced properly, and allows me to easily adjust the attack timing by just moving the keyframes of the animation events. A certain amount of force is also added in the direction of the attacks to make it feels more satisfying. In the context of the gameplay loop, they are crucial for the core combat mechanics, as they ensure the optimization and the player and enemies' attacks are responsive. The blur and slash vfx are on the other hand, part of the aesthetic component of the game. Sound effects are also added to slime on-hit (which still requires adjustments).
 
-## Milestone 4 Devlog
-Milestone 4 Devlog goes here.
 ## Final Devlog
-Final Devlog goes here.
+### 1.
+My core gameplay loop involves surviving as long as possible against endless slimes. Player have the ability to perform aoe melee attacks, ranged attacks, and dashes with invincibility frames. Slimes spawn faster, and comes in different, nastier types as the game progresses. Along with my plan for this vertical slice (changed from SLG to a top-down rogue-like action game), this vertical slice contained two types of slimes, a single map, and one unique status effect (burning with DoT), along with their unique visual effects. In the full game, there are going to be more types of slimes, maps, status effects, as well as unique upgrades that is vital to most true rogue-likes. Overall, the full game should be an expanded version of my current gameplay loop, just with addition in variety, without major changes to the playstyle of fighting and evading slimes.
+
+### 2.
+My rendering effect is a simple red vignette that increases in intensity as the player's health gets lower. To do so, every time the player takes damage, I normalizes their health / max health and set the intensity of the vignette accordingly. The reference is obtained through a SerializeField Volume on the Global Volume game object. The code is as below:
+
+public override void TakeDamage(float damage, Vector2 force = default, Entity origin = null, bool causeInvincibility = true) {
+        base.TakeDamage(damage, force, origin, causeInvincibility);
+        healthBar?.SetHealth((int)health); // Update health bar when taking damage
+
+        vignette.intensity.value = (1 - health / EssentialAttributes.maxHealth) * 0.3f; // Increase vignette intensity as health decreases
+}
+
+I also have a burning effect that involves the use of a flame shader graph and a visual effects graph. The flame shader graph is responsible for animating individual flame particles, which is then generated and colored by the visual effects graph. Since the visual effects graph plays constantly in a loop, I made a prefab that only contains the burning vfx graph, and instantiates one of the prefab onto the transform of the applied target whenever applying a burn effect (the fire slime enemy applies this effect when they damages the player), and clearing them when the duration is over.
+
+#### Link to screenshots of the flame shader graph and the visual effects graph:
+https://drive.google.com/drive/folders/1wcgPC-BlSc_lwLPPgZSRVcw-c7Ez7rvI?usp=sharing
+
+### 3.
+#### 1)
+I planned my dev process using the step-by-step breakdown as it gave me a clear vision of what to do next, instead of working on multiple scripts as the same time, which could easily cause me to lose my directions. As for the bubbled diagram, I feel like that is something to draw at the very beginning of the pitching stage, and does not require much changes in-dev. 
+
+#### 2)
+I felt like breaking down the steps did not change the planned scope of the project in an objective way a lot, but helped astoundingly in organizing my own workflow. It injected a sense of time and schedule into my project, and gave me a vivid idea of how much time some task would take or how much time I should put into a specific part of my game. 
+
+#### 3)
+I pretty much sticked strongly to my break down plan and did them one-by-one. The only time I have to stop and rethink is when I encountered some tough algorithm that I need to learn or made an epiphany in a more optimized design pattern. The break downs made my work process pretty modular and linear, which I liked and made me more confident.
+
 ## Open-source assets
-- Cite any external assets used here!
+The artworks here are of the courtesy of my friend, also an UCI student, Leo Li.
